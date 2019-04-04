@@ -45,3 +45,6 @@ http://flask-sqlalchemy.pocoo.org
 
 Schedule tasks for deletion:
 https://stackoverflow.com/questions/21214270/scheduling-a-function-to-run-every-hour-on-flask/38501429#38501429
+
+Possible Caching for real-time stats? 
+http://flask.pocoo.org/docs/1.0/patterns/caching/
