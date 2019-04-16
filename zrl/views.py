@@ -1,37 +1,56 @@
-import functools
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm.exc import NoResultFound
+from zrl.database import db_session
+from zrl.models import Mapping
 
 from flask import (
-    Blueprint, flash, g, redirect, render_template, request, session, url_for
+    Blueprint, flash, render_template, request, redirect, abort
 )
-from werkzeug.security import check_password_hash, generate_password_hash
 
 bp = Blueprint('views', __name__, url_prefix='/')
 
 
+@bp.route('/zrl_edit/<int:mapping_id>')
+def tag_edit(mapping_id):
+    try:
+        mapping = Mapping.query.filter(Mapping.id == mapping_id).one()
+        return render_template('edit.html', mapping=mapping)
+    except NoResultFound:
+        abort(404)
+
+
+@bp.route('/<path:path>')
+def tag_resolver(path):
+
+    if path.endswith('/'):
+        path = path[:-1]
+
+    r = Mapping.query.filter(Mapping.tag == path).first()
+
+    # This tag doesn't exist: flash an error
+    if r is None:
+        flash(message=f'A mapping does not exist for "{path}"',
+              category='error')
+        return render_template('index.html')
+    else:
+        r.hits += 1
+        db_session.commit()
+
+    return redirect(r.url)
+
+
 @bp.route('/', methods=('GET', 'POST'))
 def index():
+
     if request.method == 'POST':
-        username = request.form['username']
-        password = request.form['password']
-        error = None
 
-        if not username:
-            error = 'Username is required.'
-        elif not password:
-            error = 'Password is required.'
-        elif db.execute(
-            'SELECT id FROM user WHERE username = ?', (username,)
-        ).fetchone() is not None:
-            error = 'User {} is already registered.'.format(username)
+        try:
+            m = Mapping(tag=request.form['tag'],
+                        url=request.form['url'])
+            db_session.add(m)
+            db_session.commit()
+        except IntegrityError as e:
+            flash(message=f'Tag ({request.form["tag"]}) already exists in the database',
+                  category='error')
 
-        if error is None:
-            db.execute(
-                'INSERT INTO user (username, password) VALUES (?, ?)',
-                (username, generate_password_hash(password))
-            )
-            db.commit()
-            return redirect(url_for('auth.login'))
-
-        flash(error)
-
-    return render_template('index.html')
+    return render_template('index.html', mappings=Mapping.query.all())

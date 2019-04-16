@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <div class="row">
+    <div class="col-6">
+        <form method="POST">
+            <div class="form-group">
+                <label for="tag">Tag</label>
+                <input class="form-control form-control-lg" type="text"
+                       value="{{ mapping.tag }}" name="tag" id="tag" placeholder="Tag">
+            </div>
+
+            <div class="form-group">
+                <label for="url">URL</label>
+                <input class="form-control form-control-lg" type="url"
+                       value="{{ mapping.url }}" name="url" id="url" placeholder="https://wherever.com">
+            </div>
+
+            <input type="submit" class="btn btn-primary">
+        </form>
+    </div>
+    </div>
+{% endblock %}
